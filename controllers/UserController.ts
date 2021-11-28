@@ -23,7 +23,6 @@ class UserController {
    }
 
    getOne = async (req: express.Request, res: express.Response) => {
-
       try {
          const user = await UserModel.findOne({ username: req.params.username }).exec()
 

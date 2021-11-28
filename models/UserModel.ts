@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IUserModel {
-   _id?: string,
+   _id?: Schema.Types.ObjectId,
    email: string,
    fullName: string,
    username: string,
