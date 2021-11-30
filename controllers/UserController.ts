@@ -3,6 +3,7 @@ import express from 'express';
 import { generateMD5 } from '../utils/generateHash';
 import { validationResult } from "express-validator";
 import jwt from 'jsonwebtoken';
+import axios from 'axios';
 import mailer from '../core/nodemailer';
 
 class UserController {
@@ -123,14 +124,40 @@ class UserController {
       try {
          if (!req.user) return res.status(404);
 
-         const token = jwt.sign({ ...req.user }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+         const token = jwt.sign({ user: req.user }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+
+         if (req.session) {
+            req.session.token = token;
+         }
+
+         return res.redirect('/auth/me');
+
+      } catch (err) {
+         return res.status(500).json({
+            status: 'error',
+            error: err
+         })
+      }
+   }
+
+   authMe = async (req: express.Request, res: express.Response) => {
+      try {
+         if (req.session?.token) {
+            const user = await axios.get(`${process.env.PROXY}/user`, {
+               headers: {
+                  'token': req.session.token
+               }
+            })
+
+            return res.json({
+               status: 'success',
+               data: user.data
+            })
+         }
 
          return res.json({
-            status: 'success',
-            data: {
-               user: req.user,
-               token: token
-            }
+            status: 'error',
+            data: null
          })
 
       } catch (err) {
@@ -140,15 +167,25 @@ class UserController {
       }
    }
 
-   authMe = async (req: express.Request, res: express.Response) => {
-      console.log('hey')
+   getMe = async (req: express.Request, res: express.Response) => {
       try {
-         if (!req.user) return res.status(404);
+         const token = req.headers.token;
 
-         return res.json({
-            status: 'success',
-            data: req.user
-         })
+         if (!token) return res.status(401).send();
+
+         const data = jwt.decode(token as string, { json: true });
+
+         if (data?.user) {
+            return res.json({
+               status: 'succes',
+               data: data.user,
+            })
+         } else {
+            return res.json({
+               status: 'error',
+               data: null,
+            })
+         }
 
       } catch (err) {
          return res.status(500).json({

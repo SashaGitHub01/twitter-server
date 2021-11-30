@@ -7,7 +7,6 @@ import { generateMD5 } from '../utils/generateHash';
 
 passport.use(new LocalStrategy(
    async (login, password, done) => {
-
       try {
          const user = await UserModel.findOne({ $or: [{ username: login }, { email: login }] });
 
@@ -28,12 +27,13 @@ passport.use(new LocalStrategy(
 
 passport.use(new JwtStrategy({
    secretOrKey: process.env.SECRET_KEY || '12345',
-   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+   jwtFromRequest: ExtractJwt.fromHeader('token')
 },
    async (payload, done) => {
       try {
-         if (payload._doc) {
-            return done(null, payload._doc);
+
+         if (payload.user) {
+            return done(null, payload.user);
          } else {
             return done(null, false);
          }
