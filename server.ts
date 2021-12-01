@@ -18,17 +18,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 //MW
-app.use(cors({
-   origin: 'http://localhost:3000',
-   credentials: true
-}));
+app.use(passport.initialize());
 app.use(cookieSession({
    name: 'session',
    keys: ['key1'],
    maxAge: 777777777
 }))
+app.use(cors({
+   origin: 'http://localhost:3000',
+   credentials: true
+}));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
-app.use(passport.initialize());
 app.use(express.json());
 
 //ROUTERS

@@ -6,6 +6,11 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import mailer from '../core/nodemailer';
 
+interface IUser {
+   _id: any,
+   [i: string]: string
+}
+
 class UserController {
    index = async (req: express.Request, res: express.Response) => {
       try {
@@ -62,14 +67,19 @@ class UserController {
             confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
          }
 
-         const user = await UserModel.create(data,);
+         const user = await UserModel.create(data);
 
-         res.json({
-            status: 'success',
-            data: user
-         })
+         if (!user) {
+            return res.status(400).send();
+         }
 
-         return mailer.sendMail(
+         const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+
+         if (req.session) {
+            req.session.token = token;
+         }
+
+         mailer.sendMail(
             {
                from: 'admin@twitter.com',
                to: data.email,
@@ -78,9 +88,12 @@ class UserController {
             }
          )
 
+         return res.redirect('/auth/me');
+
       } catch (err) {
          return res.status(500).json({
-            error: err
+            status: 'error',
+            error: 'error'
          })
       }
    }
@@ -122,9 +135,11 @@ class UserController {
 
    afterLogin = async (req: express.Request, res: express.Response) => {
       try {
-         if (!req.user) return res.status(404);
+         const user = req.user as IUser;
 
-         const token = jwt.sign({ user: req.user }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+         if (!user) return res.status(404);
+
+         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
 
          if (req.session) {
             req.session.token = token;
@@ -135,7 +150,7 @@ class UserController {
       } catch (err) {
          return res.status(500).json({
             status: 'error',
-            error: err
+            error: 'error'
          })
       }
    }
@@ -162,7 +177,8 @@ class UserController {
 
       } catch (err) {
          return res.status(500).json({
-            error: err
+            error: 'error',
+            status: 'error'
          })
       }
    }
@@ -175,10 +191,12 @@ class UserController {
 
          const data = jwt.decode(token as string, { json: true });
 
-         if (data?.user) {
+         if (data?.id) {
+            const user = await UserModel.findById(data.id);
+
             return res.json({
                status: 'succes',
-               data: data.user,
+               data: user,
             })
          } else {
             return res.json({
@@ -189,7 +207,8 @@ class UserController {
 
       } catch (err) {
          return res.status(500).json({
-            error: err
+            error: err,
+            status: 'error'
          })
       }
    }

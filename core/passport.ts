@@ -31,22 +31,23 @@ passport.use(new JwtStrategy({
 },
    async (payload, done) => {
       try {
-
-         if (payload.user) {
-            return done(null, payload.user);
+         if (payload.id) {
+            return done(null, payload.id);
          } else {
             return done(null, false);
          }
+
       } catch (err) {
          return done(err, false);
       }
    }));
 
-passport.serializeUser((user: any, done) => {
-   done(null, user?._id);
+passport.serializeUser((id: any, done) => {
+   done(null, id);
 });
 
 passport.deserializeUser(async (id, done) => {
+   console.log(id)
    const user = await UserModel.findById(id);
 
    done(null, user);
