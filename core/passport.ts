@@ -1,9 +1,25 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { Strategy as JwtStrategy, ExtractJwt, } from 'passport-jwt';
+import { Strategy as JwtStrategy, ExtractJwt, JwtFromRequestFunction, } from 'passport-jwt';
 import { UserModel } from '../models/UserModel';
 import { generateMD5 } from '../utils/generateHash';
+import express from 'express';
 
+const getToken = (req: express.Request) => {
+   const getJwtFunc: JwtFromRequestFunction = ExtractJwt.fromHeader('token');
+
+   const token = getJwtFunc(req);
+
+   if (token) {
+      return token;
+   }
+
+   if (req.session) {
+      return req.session.token as string;
+   }
+
+   return null;
+}
 
 passport.use(new LocalStrategy(
    async (login, password, done) => {
@@ -27,12 +43,12 @@ passport.use(new LocalStrategy(
 
 passport.use(new JwtStrategy({
    secretOrKey: process.env.SECRET_KEY || '12345',
-   jwtFromRequest: ExtractJwt.fromHeader('token')
+   jwtFromRequest: getToken as JwtFromRequestFunction
 },
    async (payload, done) => {
       try {
-         if (payload.id) {
-            return done(null, payload.id);
+         if (payload.id || payload.user._id) {
+            return done(null, payload.id || payload.user.id);
          } else {
             return done(null, false);
          }

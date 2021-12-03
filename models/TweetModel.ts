@@ -1,9 +1,15 @@
 import { Schema, model, Document } from "mongoose";
 
+export interface iFile {
+   url: string,
+   id: string
+}
+
 export interface ITweetSchema {
    _id?: string,
    user?: Schema.Types.ObjectId,
-   text?: string
+   text?: string,
+   images?: iFile[]
 }
 
 export type TweetModelType = ITweetSchema & Document;
@@ -18,7 +24,9 @@ const TweetSchema = new Schema<ITweetSchema>({
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-   }
+   },
+
+   images: [{ type: String }],
 },
    {
       timestamps: true

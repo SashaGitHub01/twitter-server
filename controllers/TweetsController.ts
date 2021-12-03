@@ -1,9 +1,9 @@
 import { ITweetSchema, TweetModel } from "../models/TweetModel";
 import express from 'express';
 import { generateMD5 } from '../utils/generateHash';
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, ObjectId } from "mongoose";
 import { validationResult } from "express-validator";
-import { IUserModel } from "../models/UserModel";
+import { IUserModel, UserModel } from "../models/UserModel";
 
 class UserController {
    index = async (req: express.Request, res: express.Response) => {
@@ -51,7 +51,9 @@ class UserController {
 
    create = async (req: express.Request, res: express.Response) => {
       try {
-         const user = req.user as IUserModel;
+         const id = req.user as IUserModel;
+
+         const user = await UserModel.findById(id);
 
          if (!user) {
             return res.status(400).send();
@@ -67,11 +69,12 @@ class UserController {
          }
 
          const data: ITweetSchema = {
-            text: req.body.text,
-            user: user._id
+            text: req.body.text || ' ',
+            images: req.body.images,
+            user: user._id as ObjectId
          }
 
-         const tweet = await TweetModel.create(data);
+         const tweet = await (await TweetModel.create(data)).populate('user');
 
          return res.json({
             status: 'success',
