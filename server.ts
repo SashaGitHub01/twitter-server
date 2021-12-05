@@ -14,6 +14,7 @@ import { tweetsValidation } from './validators/tweet';
 import multer from 'multer';
 import UploadFilesController from './controllers/UploadFilesController';
 import './core/cloudinary';
+import CommentsCtrl from './controllers/CommentsCtrl';
 
 const app = express();
 
@@ -54,10 +55,14 @@ app.get('/users/:username', UserController.getOne);
 
 //tweets
 app.get('/tweets', TweetsController.index);
+app.get('/tweets/filter/media', passport.authenticate('jwt'), TweetsController.filterMedia);
 app.get('/tweets/:id', TweetsController.getOne);
 app.post('/tweets', tweetsValidation, passport.authenticate('jwt'), TweetsController.create);
 app.delete('/tweets/:id', passport.authenticate('jwt'), TweetsController.delete);
 app.put('/tweets/:id', tweetsValidation, passport.authenticate('jwt'), TweetsController.update);
+
+//comments
+app.post('/comments/:id', passport.authenticate('jwt'), CommentsCtrl.create);
 
 //uploads
 app.post('/upload', upload.array('images', 6), UploadFilesController.index);

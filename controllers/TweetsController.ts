@@ -30,7 +30,9 @@ class UserController {
             return res.status(400)
          }
 
-         const tweet = await TweetModel.findById(id).populate('user');
+         const tweet = await TweetModel.findById(id).populate(
+            { path: 'comments', populate: { path: 'user' } }
+         ).populate('user');
 
          if (!tweet) {
             return res.status(404).send();
@@ -71,7 +73,8 @@ class UserController {
          const data: ITweetSchema = {
             text: req.body.text || ' ',
             images: req.body.images,
-            user: user._id as ObjectId
+            user: user._id as ObjectId,
+            comments: [],
          }
 
          const tweet = await (await TweetModel.create(data)).populate('user');
@@ -150,6 +153,29 @@ class UserController {
          return res.json({
             status: 'success',
             data: tweet
+         })
+
+      } catch (err) {
+         return res.status(500).json({
+            error: err
+         })
+      }
+   }
+
+   filterMedia = async (req: express.Request, res: express.Response) => {
+      try {
+         const userId = req.user;
+
+         if (!userId) return res.status(401).send();
+
+         const tweets = await TweetModel.find({ user: userId, images: { $not: { $size: 0 } } })
+            .sort({ createdAt: '-1' })
+            .populate('user')
+            .exec();
+
+         return res.json({
+            status: 'success',
+            data: tweets
          })
 
       } catch (err) {

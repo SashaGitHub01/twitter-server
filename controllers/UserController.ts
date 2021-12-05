@@ -40,7 +40,7 @@ class UserController {
             })
 
          } else {
-            await user?.populate('tweets');
+            await (await user?.populate('tweets')).populate('tweets.user')
 
             return res.json({
                status: 'success',
