@@ -9,6 +9,7 @@ export interface IUserModel {
    avatar_url?: string,
    confirmed_hash: string,
    confirmed?: boolean,
+   tweets?: Schema.Types.ObjectId[]
    location?: string,
    about?: string,
    website?: string,
@@ -54,6 +55,8 @@ const UserSchema = new Schema<IUserModel>({
       type: String
    },
 
+   tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
+
    location: {
       type: String,
    },
@@ -65,7 +68,7 @@ const UserSchema = new Schema<IUserModel>({
    website: {
       type: String,
    },
-})
+}, { timestamps: true })
 
 UserSchema.set('toJSON', {
    transform: function (doc, ret) {

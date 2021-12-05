@@ -76,6 +76,8 @@ class UserController {
 
          const tweet = await (await TweetModel.create(data)).populate('user');
 
+         await UserModel.updateOne({ _id: user._id }, { $push: { tweets: tweet } })
+
          return res.json({
             status: 'success',
             data: tweet
@@ -104,8 +106,8 @@ class UserController {
             return res.status(404).send();
          }
 
-         if (String(tweet.user) !== String(user._id)) {
-            return res.status(403).send();
+         if (String(tweet.user) !== String(user)) {
+            return res.status(401).send();
          }
 
          tweet.remove();

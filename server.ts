@@ -43,6 +43,7 @@ app.use(express.json());
 //auth
 app.post('/auth/register', registerValidator, UserController.create);
 app.get('/auth/me', UserController.authMe);
+app.get('/auth/logout', UserController.logout);
 app.post('/auth/login', passport.authenticate('local'), UserController.afterLogin);
 app.get('/auth/verify', registerValidator, UserController.verify);
 

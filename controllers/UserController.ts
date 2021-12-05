@@ -5,6 +5,7 @@ import { validationResult } from "express-validator";
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import mailer from '../core/nodemailer';
+import cloudinary from "cloudinary";
 
 interface IUser {
    _id: any,
@@ -34,10 +35,13 @@ class UserController {
 
          if (!user) {
             return res.status(404).json({
+               status: 'error',
                error: 'User not found'
             })
 
          } else {
+            await user?.populate('tweets');
+
             return res.json({
                status: 'success',
                data: user
@@ -46,6 +50,7 @@ class UserController {
 
       } catch (err) {
          return res.json({
+            status: 'error',
             error: err
          })
       }
@@ -63,7 +68,9 @@ class UserController {
             email: req.body.email,
             username: req.body.username,
             fullName: req.body.fullName,
+            avatar_url: 'https://res.cloudinary.com/twitter-uploads/image/upload/c_scale,w_250/v1638546128/Avatars/ktedmkkvjlhv7wo2s7wd.jpg',
             password: generateMD5(req.body.password + process.env.SECRET_KEY),
+            tweets: [],
             confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
          }
 
@@ -166,7 +173,7 @@ class UserController {
 
             return res.json({
                status: 'success',
-               data: user.data
+               data: user.data.data
             })
          }
 
@@ -174,6 +181,20 @@ class UserController {
             status: 'error',
             data: null
          })
+
+      } catch (err) {
+         return res.status(500).json({
+            error: 'error',
+            status: 'error'
+         })
+      }
+   }
+
+   logout = async (req: express.Request, res: express.Response) => {
+      try {
+         req.session = null;
+
+         return res.status(200).send()
 
       } catch (err) {
          return res.status(500).json({
@@ -193,6 +214,8 @@ class UserController {
 
          if (data?.id) {
             const user = await UserModel.findById(data.id);
+
+            await user?.populate('tweets');
 
             return res.json({
                status: 'succes',
