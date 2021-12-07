@@ -15,6 +15,7 @@ import multer from 'multer';
 import UploadFilesController from './controllers/UploadFilesController';
 import './core/cloudinary';
 import CommentsCtrl from './controllers/CommentsCtrl';
+import LikesController from './controllers/LikesController';
 
 const app = express();
 
@@ -63,6 +64,11 @@ app.put('/tweets/:id', tweetsValidation, passport.authenticate('jwt'), TweetsCon
 
 //comments
 app.post('/comments/:id', passport.authenticate('jwt'), CommentsCtrl.create);
+app.delete('/comments/:id', CommentsCtrl.delete);
+
+//likes
+app.post('/likes/:id', passport.authenticate('jwt'), LikesController.create);
+app.delete('/likes/:id', passport.authenticate('jwt'), LikesController.delete);
 
 //uploads
 app.post('/upload', upload.array('images', 6), UploadFilesController.index);

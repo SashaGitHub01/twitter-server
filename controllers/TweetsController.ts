@@ -75,6 +75,7 @@ class UserController {
             images: req.body.images,
             user: user._id as ObjectId,
             comments: [],
+            likes: []
          }
 
          const tweet = await (await TweetModel.create(data)).populate('user');

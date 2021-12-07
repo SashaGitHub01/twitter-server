@@ -2,8 +2,8 @@ import { Schema, model, Document } from "mongoose";
 
 export interface ICommentSchema {
    _id?: string,
-   user?: Schema.Types.ObjectId,
-   text?: string,
+   user: Schema.Types.ObjectId,
+   text: string,
    tweet: Schema.Types.ObjectId,
 }
 
@@ -20,6 +20,12 @@ const CommentSchema = new Schema<ICommentSchema>({
       ref: 'User',
       required: true,
    },
+
+   tweet: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tweet',
+      required: true
+   }
 },
    {
       timestamps: true

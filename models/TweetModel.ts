@@ -10,7 +10,8 @@ export interface ITweetSchema {
    user?: Schema.Types.ObjectId,
    text?: string,
    images?: iFile[],
-   comments: Schema.Types.ObjectId[]
+   comments: Schema.Types.ObjectId[],
+   likes: Schema.Types.ObjectId[],
 }
 
 export type TweetModelType = ITweetSchema & Document;
@@ -28,6 +29,8 @@ const TweetSchema = new Schema<ITweetSchema>({
    },
 
    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', }],
+
+   likes: [{ type: Schema.Types.ObjectId, ref: 'User', }],
 
    images: [{ type: String }],
 },

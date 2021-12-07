@@ -55,7 +55,7 @@ class UploadFilesController {
 
             const url = result.secure_url;
 
-            user.set({ avatar_url: url });
+            user.update({ avatar_url: url });
 
             user.save();
 
@@ -65,8 +65,6 @@ class UploadFilesController {
             })
 
          }).end(file.buffer)
-
-
 
       } catch (err) {
          return res.json({

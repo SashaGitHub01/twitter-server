@@ -64,13 +64,14 @@ class UserController {
             return res.status(400).json({ errors: errors })
          }
 
-         const data = {
+         const data: IUserModel = {
             email: req.body.email,
             username: req.body.username,
             fullName: req.body.fullName,
             avatar_url: 'https://res.cloudinary.com/twitter-uploads/image/upload/c_scale,w_250/v1638546128/Avatars/ktedmkkvjlhv7wo2s7wd.jpg',
             password: generateMD5(req.body.password + process.env.SECRET_KEY),
             tweets: [],
+            likes: [],
             confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
          }
 

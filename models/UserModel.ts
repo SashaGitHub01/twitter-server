@@ -6,6 +6,7 @@ export interface IUserModel {
    fullName: string,
    username: string,
    password: string,
+   likes: Schema.Types.ObjectId[],
    avatar_url?: string,
    confirmed_hash: string,
    confirmed?: boolean,
@@ -56,6 +57,8 @@ const UserSchema = new Schema<IUserModel>({
    },
 
    tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
+
+   likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
 
    location: {
       type: String,

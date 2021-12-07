@@ -42,6 +42,33 @@ class CommentsController {
          })
       }
    }
+
+   delete = async (req: express.Request, res: express.Response) => {
+      try {
+         const id = req.params.id;
+
+         const comment = await CommentModel.findById(id);
+
+         if (!comment) return res.status(404).send();
+
+         const tweetId = comment.tweet;
+
+         await comment.delete();
+
+         res.json({
+            status: 'success',
+            data: 'deleted'
+         })
+
+         return await TweetModel.findByIdAndUpdate({ _id: tweetId }, { $pull: { comments: id } });
+
+      } catch (err) {
+         return res.status(500).json({
+            status: 'error',
+            error: err
+         })
+      }
+   }
 }
 
 export default new CommentsController();
