@@ -77,7 +77,8 @@ app.post('/upload/avatar', passport.authenticate('jwt'), upload.single('avatar')
 const start = async () => {
    try {
       await mongoose.connect(process.env.DB_URL ||
-         'mongodb+srv://admin:admin@cluster0.msbqj.mongodb.net/twitter?retryWrites=true&w=majority');
+         'mongodb+srv://admin:admin@cluster0.msbqj.mongodb.net/twitter?retryWrites=true&w=majority',
+         { autoIndex: false });
       app.listen(PORT, () => {
          console.log('Server is running', PORT)
       })
