@@ -1,4 +1,5 @@
 import express from 'express';
+import { Schema } from 'mongoose';
 import { TweetModel } from '../models/TweetModel';
 import { UserModel } from '../models/UserModel';
 
@@ -10,16 +11,22 @@ class LikesController {
 
          if (!userId) return res.status(401).send();
 
-         const tweet = await TweetModel.findByIdAndUpdate(id, { $push: { likes: userId } }, { new: true });
+         const tweet = await TweetModel.findById(id);
 
          if (!tweet) return res.status(400).send();
+
+         if (tweet?.likes.includes(userId as Schema.Types.ObjectId)) return res.status(400).send();
+
+         await tweet.updateOne({ $push: { likes: userId } }, { new: true });
+
+         tweet.save();
 
          res.json({
             status: 'success',
             data: tweet
          })
 
-         return await UserModel.findByIdAndUpdate(userId, { $push: { likes: id } });
+         return await UserModel.findByIdAndUpdate(userId, { $push: { likes: id } }, { new: true });
 
       } catch (err) {
          return res.status(500).json({
@@ -45,8 +52,9 @@ class LikesController {
             data: tweet
          })
 
-         return await UserModel.findByIdAndUpdate(userId, { $pull: { likes: id } });
+         const user = await UserModel.findByIdAndUpdate(userId, { $pull: { likes: id } }, { new: true });
 
+         return;
       } catch (err) {
          return res.status(500).json({
             status: 'error',

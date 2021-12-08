@@ -56,9 +56,9 @@ const UserSchema = new Schema<IUserModel>({
       type: String
    },
 
-   tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
+   tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet', unique: true }],
 
-   likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
+   likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet', unique: true }],
 
    location: {
       type: String,

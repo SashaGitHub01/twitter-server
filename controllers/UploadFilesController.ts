@@ -48,15 +48,15 @@ class UploadFilesController {
 
          if (!file) return res.status(400).send();
 
-         cloudinary.v2.uploader.upload_stream({ folder: 'Avatars' }, (error, result) => {
+         cloudinary.v2.uploader.upload_stream({ folder: 'Avatars' }, async (error, result) => {
             if (error || !result) {
                throw Error('Upload error')
             }
 
             const url = result.secure_url;
 
-            user.update({ avatar_url: url });
-
+            await user.updateOne({ avatar_url: url }, { new: true });
+            console.log(user.avatar_url, 'and', url)
             user.save();
 
             return res.json({
