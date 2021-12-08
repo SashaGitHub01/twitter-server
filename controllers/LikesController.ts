@@ -26,7 +26,14 @@ class LikesController {
             data: tweet
          })
 
-         return await UserModel.findByIdAndUpdate(userId, { $push: { likes: id } }, { new: true });
+         const user = await UserModel.findById(userId);
+
+         if (!user) return res.status(401).send();
+
+         await user.updateOne({ $push: { likes: id } }, { new: true });
+         await user.save();
+         console.log(user.likes)
+         return;
 
       } catch (err) {
          return res.status(500).json({
@@ -52,7 +59,7 @@ class LikesController {
             data: tweet
          })
 
-         const user = await UserModel.findByIdAndUpdate(userId, { $pull: { likes: id } }, { new: true });
+         await UserModel.findByIdAndUpdate(userId, { $pull: { likes: id } }, { new: true });
 
          return;
       } catch (err) {
