@@ -30,7 +30,7 @@ const TweetSchema = new Schema<ITweetSchema>({
 
    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', }],
 
-   likes: [{ type: Schema.Types.ObjectId, ref: 'User', unique: true }],
+   likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 
    images: [{ type: String }],
 },

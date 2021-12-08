@@ -15,11 +15,11 @@ class LikesController {
 
          if (!tweet) return res.status(400).send();
 
-         if (tweet?.likes.includes(userId as Schema.Types.ObjectId)) return res.status(400).send();
+         if (tweet.likes.includes(userId as Schema.Types.ObjectId)) return res.status(400).send();
 
-         await tweet.updateOne({ $push: { likes: userId } }, { new: true });
+         tweet.likes.push(userId as Schema.Types.ObjectId);
 
-         tweet.save();
+         await tweet.save();
 
          res.json({
             status: 'success',
@@ -32,7 +32,7 @@ class LikesController {
 
          await user.updateOne({ $push: { likes: id } }, { new: true });
          await user.save();
-         console.log(user.likes)
+
          return;
 
       } catch (err) {

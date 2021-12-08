@@ -55,13 +55,12 @@ class UploadFilesController {
 
             const url = result.secure_url;
 
-            await user.updateOne({ avatar_url: url }, { new: true });
-            console.log(user.avatar_url, 'and', url)
+            user.updateOne({ avatar_url: url }, { new: true });
             user.save();
 
             return res.json({
                status: 'succes',
-               data: user
+               data: url
             })
 
          }).end(file.buffer)
