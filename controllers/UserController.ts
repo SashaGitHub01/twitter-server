@@ -72,6 +72,8 @@ class UserController {
             password: generateMD5(req.body.password + process.env.SECRET_KEY),
             tweets: [],
             likes: [],
+            followers: [],
+            following: [],
             confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
          }
 

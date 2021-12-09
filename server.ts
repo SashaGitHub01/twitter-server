@@ -16,6 +16,7 @@ import UploadFilesController from './controllers/UploadFilesController';
 import './core/cloudinary';
 import CommentsCtrl from './controllers/CommentsCtrl';
 import LikesController from './controllers/LikesController';
+import FollowController from './controllers/FollowController';
 
 const app = express();
 
@@ -56,7 +57,8 @@ app.get('/users/:username', UserController.getOne);
 
 //tweets
 app.get('/tweets', TweetsController.index);
-app.get('/tweets/filter/media', passport.authenticate('jwt'), TweetsController.filterMedia);
+app.get('/tweets/:userId/filter/media', TweetsController.filterMedia);
+app.get('/tweets/:userId/filter/likes', TweetsController.filterLikes);
 app.get('/tweets/:id', TweetsController.getOne);
 app.post('/tweets', tweetsValidation, passport.authenticate('jwt'), TweetsController.create);
 app.delete('/tweets/:id', passport.authenticate('jwt'), TweetsController.delete);
@@ -70,15 +72,21 @@ app.delete('/comments/:id', CommentsCtrl.delete);
 app.post('/likes/:id', passport.authenticate('jwt'), LikesController.create);
 app.delete('/likes/:id', passport.authenticate('jwt'), LikesController.delete);
 
+//follow
+app.post('/follow/:id', passport.authenticate('jwt'), FollowController.create);
+app.delete('/follow/:id', passport.authenticate('jwt'), FollowController.delete);
+
 //uploads
 app.post('/upload', upload.array('images', 6), UploadFilesController.index);
 app.post('/upload/avatar', passport.authenticate('jwt'), upload.single('avatar'), UploadFilesController.avatar);
+
 
 const start = async () => {
    try {
       await mongoose.connect(process.env.DB_URL ||
          'mongodb+srv://admin:admin@cluster0.msbqj.mongodb.net/twitter?retryWrites=true&w=majority',
          { autoIndex: false });
+
       app.listen(PORT, () => {
          console.log('Server is running', PORT)
       })

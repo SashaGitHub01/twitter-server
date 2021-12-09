@@ -1,7 +1,7 @@
 import { ITweetSchema, TweetModel } from "../models/TweetModel";
 import express from 'express';
 import { generateMD5 } from '../utils/generateHash';
-import { isValidObjectId, ObjectId } from "mongoose";
+import { isValidObjectId, ObjectId, Schema } from "mongoose";
 import { validationResult } from "express-validator";
 import { IUserModel, UserModel } from "../models/UserModel";
 
@@ -165,7 +165,7 @@ class UserController {
 
    filterMedia = async (req: express.Request, res: express.Response) => {
       try {
-         const userId = req.user;
+         const userId = req.params.userId as unknown as Schema.Types.ObjectId;
 
          if (!userId) return res.status(401).send();
 
@@ -177,6 +177,34 @@ class UserController {
          return res.json({
             status: 'success',
             data: tweets
+         })
+
+      } catch (err) {
+         return res.status(500).json({
+            error: err
+         })
+      }
+   }
+
+   filterLikes = async (req: express.Request, res: express.Response) => {
+      try {
+         const userId = req.params.userId as unknown as Schema.Types.ObjectId;
+
+         if (!userId) return res.status(401).send();
+
+         const user = await UserModel.findById(userId)
+            .populate({ path: 'likes', populate: { path: 'user' } })
+            .exec();
+
+         if (!user) return res.status(404).send();
+         if (!user.likes.length) return res.json({
+            status: 'success',
+            data: []
+         })
+
+         return res.json({
+            status: 'success',
+            data: user.likes
          })
 
       } catch (err) {
