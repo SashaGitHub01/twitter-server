@@ -5,7 +5,7 @@ export interface IUserModel {
    email: string,
    fullName: string,
    username: string,
-   password: string,
+   password?: string,
    likes: Schema.Types.ObjectId[],
    followers: Schema.Types.ObjectId[],
    following: Schema.Types.ObjectId[],
@@ -40,7 +40,6 @@ const UserSchema = new Schema<IUserModel>({
 
    password: {
       type: String,
-      required: true,
    },
 
    confirmed: {
@@ -58,7 +57,7 @@ const UserSchema = new Schema<IUserModel>({
       type: String
    },
 
-   tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet', unique: true }],
+   tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
 
    likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
 

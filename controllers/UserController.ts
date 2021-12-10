@@ -165,6 +165,28 @@ class UserController {
       }
    }
 
+   googleAuth = async (req: express.Request, res: express.Response) => {
+      try {
+         const user = req.user as IUser;
+
+         if (!user) return res.status(401).send();
+
+         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+
+         if (req.session) {
+            req.session.token = token;
+         }
+
+         return res.redirect(`${process.env.CLIENT}/`);
+
+      } catch (err) {
+         return res.status(500).json({
+            status: 'error',
+            error: 'error'
+         })
+      }
+   }
+
    authMe = async (req: express.Request, res: express.Response) => {
       try {
          if (req.session?.token) {

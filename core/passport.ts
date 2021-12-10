@@ -1,7 +1,8 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as JwtStrategy, ExtractJwt, JwtFromRequestFunction, } from 'passport-jwt';
-import { UserModel } from '../models/UserModel';
+import { IUserModel, UserModel } from '../models/UserModel';
 import { generateMD5 } from '../utils/generateHash';
 import express from 'express';
 
@@ -57,6 +58,46 @@ passport.use(new JwtStrategy({
          return done(err, false);
       }
    }));
+
+passport.use(new GoogleStrategy({
+   clientID: process.env.GOOGLE_CLIENT_ID as string,
+   clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+   callbackURL: process.env.PROXY as string + "/auth/google/callback"
+},
+   async (accessToken, refreshToken, profile, cb) => {
+      if (profile) {
+         try {
+            const login = profile._json.email?.split('@')[0];
+            const user = await UserModel.findOne({ username: login });
+
+            if (user) {
+               cb(null, user);
+            }
+
+            if (!user) {
+               const data: IUserModel = {
+                  email: profile._json.email as string,
+                  username: login as string,
+                  fullName: profile._json.name as string,
+                  avatar_url: 'https://res.cloudinary.com/twitter-uploads/image/upload/c_scale,w_250/v1638546128/Avatars/ktedmkkvjlhv7wo2s7wd.jpg',
+                  tweets: [],
+                  likes: [],
+                  followers: [],
+                  following: [],
+                  confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
+               }
+               console.log('DATAAA:', data)
+               const newUser = await UserModel.create(data);
+
+               cb(null, newUser);
+            }
+         } catch (err) {
+            console.log(err)
+            cb('err');
+         }
+      }
+   }
+));
 
 passport.serializeUser((id: any, done) => {
    done(null, id);
