@@ -8,60 +8,29 @@ class LikesController {
       try {
          const userId = req.user;
          const id = req.params.id;
-
          if (!userId) return res.status(401).send();
-
-         const tweet = await TweetModel.findById(id);
-
-         if (!tweet) return res.status(400).send();
-
-         if (tweet.likes.includes(userId as Schema.Types.ObjectId)) return res.status(400).send();
-
-         tweet.likes.push(userId as Schema.Types.ObjectId);
-
-         await tweet.save();
-
-         res.json({
-            status: 'success',
-            data: tweet
-         })
 
          const user = await UserModel.findById(userId);
+         const tweet = await TweetModel.findById(id);
+         if (!tweet || !user) return res.status(400).send();
 
-         if (!user) return res.status(401).send();
+         if (tweet.likes.includes(userId as Schema.Types.ObjectId)
+            || user.likes.includes(id as unknown as Schema.Types.ObjectId)) {
+            await tweet.updateOne({ $pull: { likes: userId } })
+            await user.updateOne({ $pull: { likes: id } })
+         } else {
+            await tweet.updateOne({ $push: { likes: userId } }, { new: true });
+            await user.updateOne({ $push: { likes: id } }, { new: true });
+         }
 
-         await user.updateOne({ $push: { likes: id } }, { new: true });
+         await tweet.save();
          await user.save();
 
-         return;
-
-      } catch (err) {
-         return res.status(500).json({
-            status: 'error',
-            data: null
-         })
-      }
-   }
-
-   delete = async (req: express.Request, res: express.Response) => {
-      try {
-         const userId = req.user;
-         const id = req.params.id;
-
-         if (!userId) return res.status(401).send();
-
-         const tweet = await TweetModel.findByIdAndUpdate(id, { $pull: { likes: userId } }, { new: true });
-
-         if (!tweet) return res.status(400).send();
-
-         res.json({
+         return res.json({
             status: 'success',
-            data: tweet
+            data: userId
          })
 
-         await UserModel.findByIdAndUpdate(userId, { $pull: { likes: id } }, { new: true });
-
-         return;
       } catch (err) {
          return res.status(500).json({
             status: 'error',

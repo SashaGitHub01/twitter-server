@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import mailer from '../core/nodemailer';
 import cloudinary from "cloudinary";
+import { ApiError } from "../utils/ApiError";
 
 interface IUser {
    _id: any,
@@ -13,7 +14,7 @@ interface IUser {
 }
 
 class UserController {
-   index = async (req: express.Request, res: express.Response) => {
+   index = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          const users = await UserModel.find({}).exec()
 
@@ -22,22 +23,16 @@ class UserController {
             data: users
          })
 
-      } catch (err) {
-         return res.status(500).json({
-            error: err
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   getOne = async (req: express.Request, res: express.Response) => {
+   getOne = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          const user = await UserModel.findOne({ username: req.params.username }).exec()
-
          if (!user) {
-            return res.status(404).json({
-               status: 'error',
-               error: 'User not found'
-            })
+            return next(ApiError.notFound('User not found'))
 
          } else {
             await (await user?.populate('tweets')).populate('tweets.user')
@@ -48,20 +43,17 @@ class UserController {
             })
          }
 
-      } catch (err) {
-         return res.json({
-            status: 'error',
-            error: err
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   create = async (req: express.Request, res: express.Response) => {
+   create = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          const errors = validationResult(req);
 
          if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors })
+            return next(ApiError.badReq(errors.array()[0].msg as string))
          }
 
          const data: IUserModel = {
@@ -78,12 +70,11 @@ class UserController {
          }
 
          const user = await UserModel.create(data);
-
          if (!user) {
-            return res.status(400).send();
+            return next(ApiError.badReq('Invalid data'))
          }
 
-         const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+         const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY as string, { expiresIn: '30d' });
 
          if (req.session) {
             req.session.token = token;
@@ -100,11 +91,8 @@ class UserController {
 
          return res.redirect('/auth/me');
 
-      } catch (err) {
-         return res.status(500).json({
-            status: 'error',
-            error: 'error'
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
@@ -143,13 +131,12 @@ class UserController {
       }
    }
 
-   afterLogin = async (req: express.Request, res: express.Response) => {
+   afterLogin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          const user = req.user as IUser;
+         if (!user) return next(ApiError.unauthorized(''))
 
-         if (!user) return res.status(404);
-
-         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY as string, { expiresIn: '30d' });
 
          if (req.session) {
             req.session.token = token;
@@ -157,21 +144,17 @@ class UserController {
 
          return res.redirect('/auth/me');
 
-      } catch (err) {
-         return res.status(500).json({
-            status: 'error',
-            error: 'error'
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   googleAuth = async (req: express.Request, res: express.Response) => {
+   googleAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          const user = req.user as IUser;
-
          if (!user) return res.status(401).send();
 
-         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY || 'kjskszpj', { expiresIn: '30d' });
+         const token = jwt.sign({ id: user?._id }, process.env.SECRET_KEY as string, { expiresIn: '30d' });
 
          if (req.session) {
             req.session.token = token;
@@ -179,85 +162,44 @@ class UserController {
 
          return res.redirect(`${process.env.CLIENT}/`);
 
-      } catch (err) {
-         return res.status(500).json({
-            status: 'error',
-            error: 'error'
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   authMe = async (req: express.Request, res: express.Response) => {
+   authMe = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
-         if (req.session?.token) {
-            const user = await axios.get(`${process.env.PROXY}/user`, {
-               headers: {
-                  'token': req.session.token
-               }
-            })
+         if (req.user) {
+            const user = await UserModel.findById(req.user).populate('tweets')
+            if (!user) return next(ApiError.notFound('User not found'))
 
             return res.json({
-               status: 'success',
-               data: user.data.data
+               data: user,
+               status: 'success'
             })
          }
 
-         return res.json({
-            status: 'error',
-            data: null
-         })
+         return next(ApiError.unauthorized('Auth error'))
 
-      } catch (err) {
-         return res.status(500).json({
-            error: 'error',
-            status: 'error'
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   logout = async (req: express.Request, res: express.Response) => {
+   logout = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
          req.session = null;
-
          return res.status(200).send()
-
-      } catch (err) {
-         return res.status(500).json({
-            error: 'error',
-            status: 'error'
-         })
+      } catch (err: any) {
+         return next(ApiError.internal(err.message))
       }
    }
 
-   getMe = async (req: express.Request, res: express.Response) => {
+   getMe = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
-         const token = req.headers.token;
-
-         if (!token) return res.status(401).send();
-
-         const data = jwt.decode(token as string, { json: true });
-
-         if (data?.id) {
-            const user = await UserModel.findById(data.id);
-
-            await user?.populate('tweets');
-
-            return res.json({
-               status: 'succes',
-               data: user,
-            })
-         } else {
-            return res.json({
-               status: 'error',
-               data: null,
-            })
-         }
-
-      } catch (err) {
-         return res.status(500).json({
-            error: err,
-            status: 'error'
-         })
+         return next(ApiError.internal('DEPRICATED'))
+      } catch (err: any) {
+         return next(ApiError.internal('DEPRICATED'))
       }
    }
 }

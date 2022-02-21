@@ -4,6 +4,7 @@ import { generateMD5 } from '../utils/generateHash';
 import { isValidObjectId, ObjectId, Schema } from "mongoose";
 import { validationResult } from "express-validator";
 import { IUserModel, UserModel } from "../models/UserModel";
+import { CommentModel } from "../models/CommentModel";
 
 class UserController {
    index = async (req: express.Request, res: express.Response) => {
@@ -114,7 +115,9 @@ class UserController {
             return res.status(401).send();
          }
 
-         tweet.remove();
+         await tweet.remove();
+         await CommentModel.deleteMany({ tweet: tweet._id })
+         await UserModel.updateMany({ likes: { $in: [tweet._id] } }, { $pull: { likes: tweet._id } })
 
          return res.json({
             status: 'success',

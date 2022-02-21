@@ -8,7 +8,6 @@ import express from 'express';
 
 const getToken = (req: express.Request) => {
    const getJwtFunc: JwtFromRequestFunction = ExtractJwt.fromHeader('token');
-
    const token = getJwtFunc(req);
 
    if (token) {
@@ -43,7 +42,7 @@ passport.use(new LocalStrategy(
 ));
 
 passport.use(new JwtStrategy({
-   secretOrKey: process.env.SECRET_KEY || '12345',
+   secretOrKey: process.env.SECRET_KEY as string,
    jwtFromRequest: getToken as JwtFromRequestFunction
 },
    async (payload, done) => {
@@ -62,7 +61,7 @@ passport.use(new JwtStrategy({
 passport.use(new GoogleStrategy({
    clientID: process.env.GOOGLE_CLIENT_ID as string,
    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-   callbackURL: process.env.PROXY as string + "/auth/google/callback"
+   callbackURL: process.env.PROXY as string + "/api/auth/google/callback"
 },
    async (accessToken, refreshToken, profile, cb) => {
       if (profile) {
@@ -75,24 +74,25 @@ passport.use(new GoogleStrategy({
             }
 
             if (!user) {
+               const size = '=s220-c';
+               const picture = profile._json.picture?.split('=s')[0] + size;
+
                const data: IUserModel = {
                   email: profile._json.email as string,
                   username: login as string,
                   fullName: profile._json.name as string,
-                  avatar_url: 'https://res.cloudinary.com/twitter-uploads/image/upload/c_scale,w_250/v1638546128/Avatars/ktedmkkvjlhv7wo2s7wd.jpg',
+                  avatar_url: picture || 'https://res.cloudinary.com/twitter-uploads/image/upload/c_scale,w_250/v1638546128/Avatars/ktedmkkvjlhv7wo2s7wd.jpg',
                   tweets: [],
                   likes: [],
                   followers: [],
                   following: [],
                   confirmed_hash: generateMD5(process.env.SECRET_KEY || Math.random().toString())
                }
-               console.log('DATAAA:', data)
                const newUser = await UserModel.create(data);
 
                cb(null, newUser);
             }
          } catch (err) {
-            console.log(err)
             cb('err');
          }
       }
@@ -104,9 +104,7 @@ passport.serializeUser((id: any, done) => {
 });
 
 passport.deserializeUser(async (id, done) => {
-   console.log(id)
    const user = await UserModel.findById(id);
-
    done(null, user);
 });
 
